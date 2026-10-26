@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>Danat Swap — Demo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-mini"><span class="coin-mark">D</span><span>DANAT <b>SWAP</b></span></div>
+    <button id="langToggle" class="lang-toggle" aria-label="Change language">العربية</button>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="coin-large">D</div>
+      <p class="eyebrow" data-i18n="eyebrow">DECENTRALIZED SWAP INTERFACE</p>
+      <h1 data-i18n="title">Trade DNC ↔ USDT</h1>
+      <p class="muted" data-i18n="subtitle">A preview interface for the Danat Coin pair.</p>
+      <div class="network-pill"><span class="dot"></span><span data-i18n="network">Ethereum Mainnet · Demo</span></div>
+    </section>
+
+    <section class="card wallet-card">
+      <div>
+        <div class="label" data-i18n="wallet">Wallet</div>
+        <div class="wallet-status" id="walletStatus" data-i18n="notConnected">Not connected</div>
+      </div>
+      <button id="connectBtn" class="secondary-btn" data-i18n="connect">Connect wallet</button>
+    </section>
+
+    <section class="card swap-card">
+      <div class="section-heading">
+        <h2 data-i18n="swap">Swap</h2>
+        <span class="demo-badge" data-i18n="demoOnly">DEMO ONLY</span>
+      </div>
+      <div class="field-label" data-i18n="youPay">You pay</div>
+      <div class="token-field">
+        <input id="amount" inputmode="decimal" type="number" min="0" step="any" placeholder="0.00" value="100">
+        <button class="token-chip" type="button"><span class="token-icon usdt">₮</span> USDT <span class="chevron">⌄</span></button>
+      </div>
+      <button class="switch-btn" aria-label="Swap direction" id="switchBtn">↕</button>
+      <div class="field-label" data-i18n="youReceive">You receive (estimate)</div>
+      <div class="token-field receive-field">
+        <div id="receiveAmount" class="receive-amount">—</div>
+        <div class="token-chip"><span class="token-icon dnc">D</span> DNC <span class="chevron">⌄</span></div>
+      </div>
+      <div class="details">
+        <div><span data-i18n="rate">Rate</span><b data-i18n="notAvailable">Not connected to pool</b></div>
+        <div><span data-i18n="networkFee">Network fee</span><b data-i18n="shownBeforeConfirm">Shown before confirmation</b></div>
+      </div>
+      <button id="previewBtn" class="primary-btn" data-i18n="preview">Preview swap</button>
+      <p class="notice" data-i18n="notice">This is a visual demo. No wallet connection or real trade is performed.</p>
+    </section>
+
+    <section class="feature-row">
+      <div class="feature"><span>◆</span><b data-i18n="nonCustodial">Non-custodial</b><small data-i18n="yourWallet">Your wallet stays yours</small></div>
+      <div class="feature"><span>⇄</span><b data-i18n="onePair">One pair</b><small data-i18n="onlyPair">DNC / USDT only</small></div>
+      <div class="feature"><span>◎</span><b data-i18n="bilingual">Bilingual</b><small data-i18n="twoLanguages">Arabic & English</small></div>
+    </section>
+  </main>
+  <footer><span>Danat Swap</span><span data-i18n="footer">Prototype · Trading disabled</span></footer>
+</div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <button id="closeModal" class="close" aria-label="Close">×</button>
+    <div class="modal-icon">!</div>
+    <h2 data-i18n="previewTitle">Preview only</h2>
+    <p data-i18n="previewBody">The pool address and verified token contracts have not been configured. No transaction will be sent.</p>
+    <button id="okModal" class="primary-btn" data-i18n="understand">Understood</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
