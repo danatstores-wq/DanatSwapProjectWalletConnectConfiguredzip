@@ -3,7 +3,7 @@ import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethe
 
 // --- DANATSWAP CONTRACT & POOL CONFIGURATION ---
 export const CONFIG = {
-  // Standard Uniswap V2 Router (Ethereum Mainnet)
+  // Standard Uniswap V2 Router02 (Ethereum Mainnet)
   UNISWAP_V2_ROUTER: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
   
   // Verified Token Contracts
@@ -13,6 +13,16 @@ export const CONFIG = {
   // Your Specific DNC-USDT Liquidity Pool Address
   DNC_USDT_PAIR: "0x51e10689e6a928fa0e02ec58589e7e293c1ab69a"
 };
+
+// --- STANDARD ABIS FOR APPROVALS AND SWAPS ---
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)"
+];
+
+const ROUTER_ABI = [
+  "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)"
+];
 
 // --- BILINGUAL TRANSLATIONS & DICTIONARY ---
 export const translations = {
@@ -55,8 +65,8 @@ export const translations = {
     twoLanguages: "Arabic & English",
     footer: "DanatSwap · Powered by Uniswap V2",
     previewTitle: "Swap Preview",
-    previewBody: "Your DNC/USDT liquidity pool is connected and ready. Swap execution logic can be finalized next.",
-    understand: "Understood",
+    previewBody: "Your DNC/USDT liquidity pool is connected and ready. Click confirm below to execute your live on-chain swap.",
+    understand: "Confirm & Swap",
   },
   ar: {
     eyebrow: "واجهة مبادلة لامركزية",
@@ -97,8 +107,8 @@ export const translations = {
     twoLanguages: "العربية والإنجليزية",
     footer: "دانات سواب",
     previewTitle: "معاينة المبادلة",
-    previewBody: "مجمع السيولة DNC/USDT متصل وجاهز.",
-    understand: "فهمت",
+    previewBody: "مجمع السيولة DNC/USDT متصل وجاهز. اضغط تأكيد أدناه لتنفيذ المبادلة الحية.",
+    understand: "تأكيد ومبادلة",
   },
 };
 
@@ -129,14 +139,107 @@ document.getElementById("langToggle").addEventListener("click", () => {
 const modal = document.getElementById("modal");
 document.getElementById("previewBtn").addEventListener("click", () => modal.classList.remove("hidden"));
 document.getElementById("closeModal").addEventListener("click", () => modal.classList.add("hidden"));
-document.getElementById("okModal").addEventListener("click", () => modal.classList.add("hidden"));
 
-// --- DYNAMIC POOL CALCULATION WITH FALLBACK ---
-async function fetchPoolOutput(inputAmountUSDT) {
-  const amountIn = parseFloat(inputAmountUSDT);
+// --- TOKEN DIRECTION STATE ---
+let isBuyingDNC = true; // Default: Pay USDT, Receive DNC
+
+const switchBtn = document.getElementById("switchBtn");
+const amountInput = document.getElementById("amount");
+const receiveElem = document.getElementById("receiveAmount");
+
+switchBtn.addEventListener("click", async () => {
+  isBuyingDNC = !isBuyingDNC;
+  
+  // Clear fields on switch
+  amountInput.value = "";
+  receiveElem.textContent = "—";
+
+  // Update token labels visually
+  const payBadge = document.querySelector("#amount + *");
+  const receiveBadge = document.querySelector("#receiveAmount + *");
+  if (payBadge && receiveBadge) {
+    payBadge.textContent = isBuyingDNC ? "USDT" : "DNC";
+    receiveBadge.textContent = isBuyingDNC ? "DNC" : "USDT";
+  }
+});
+
+// --- LIVE ON-CHAIN SWAP EXECUTION LOGIC ---
+async function executeLiveSwap(amountInStr, amountOutMinStr) {
+  if (!window.ethereum) {
+    alert("No Web3 wallet found. Please use an injected browser or wallet app.");
+    return;
+  }
+
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const userAddress = await signer.getAddress();
+
+    // Determine token decimals and path based on direction
+    const tokenInAddress = isBuyingDNC ? CONFIG.USDT_ADDRESS : CONFIG.DNC_ADDRESS;
+    const tokenOutAddress = isBuyingDNC ? CONFIG.DNC_ADDRESS : CONFIG.USDT_ADDRESS;
+    
+    const decimalsIn = isBuyingDNC ? 6 : 18;
+    const decimalsOut = isBuyingDNC ? 18 : 6;
+
+    const amountIn = ethers.utils.parseUnits(amountInStr, decimalsIn);
+    const minOutputWithSlippage = parseFloat(amountOutMinStr) * 0.995; // 0.5% slippage
+    const amountOutMin = ethers.utils.parseUnits(minOutputWithSlippage.toFixed(4), decimalsOut);
+
+    const tokenInContract = new ethers.Contract(tokenInAddress, ERC20_ABI, signer);
+
+    // 1. Check token allowance for the Uniswap Router
+    const allowance = await tokenInContract.allowance(userAddress, CONFIG.UNISWAP_V2_ROUTER);
+    if (allowance.lt(amountIn)) {
+      console.log("Approval required. Requesting token approval...");
+      const approveTx = await tokenInContract.approve(CONFIG.UNISWAP_V2_ROUTER, ethers.constants.MaxUint256);
+      await approveTx.wait();
+      console.log("Approval confirmed!");
+    }
+
+    // 2. Prepare and execute Uniswap V2 router swap
+    const routerContract = new ethers.Contract(CONFIG.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
+    const path = [tokenInAddress, tokenOutAddress];
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes expiration
+
+    console.log("Executing swap transaction...");
+    const swapTx = await routerContract.swapExactTokensForTokens(
+      amountIn,
+      amountOutMin,
+      path,
+      userAddress,
+      deadline
+    );
+
+    alert(`Swap submitted successfully! Tx: ${swapTx.hash}`);
+    modal.classList.add("hidden");
+
+    const receipt = await swapTx.wait();
+    console.log("Swap confirmed in block:", receipt.blockNumber);
+  } catch (error) {
+    console.error("Swap execution failed:", error);
+    alert(`Swap failed: ${error.message || error}`);
+  }
+}
+
+// Hook up the modal confirm button to execute the live transaction
+document.getElementById("okModal").addEventListener("click", async () => {
+  const amountInputVal = amountInput.value;
+  const receiveAmountText = receiveElem.textContent;
+
+  if (!amountInputVal || receiveAmountText === "—") {
+    alert("Please enter a valid swap amount first.");
+    return;
+  }
+
+  await executeLiveSwap(amountInputVal, receiveAmountText);
+});
+
+// --- DYNAMIC POOL CALCULATION WITH DIRECTION SUPPORT ---
+async function fetchPoolOutput(inputAmount) {
+  const amountIn = parseFloat(inputAmount);
   if (isNaN(amountIn) || amountIn <= 0) return "—";
 
-  // Initial reserve state (1,000 USDT and 1,000 DNC) as robust local fallback
   let rUSDT = 1000;
   let rDNC = 1000;
 
@@ -146,7 +249,6 @@ async function fetchPoolOutput(inputAmountUSDT) {
       "function token0() external view returns (address)"
     ];
 
-    // Using Ethereum RPC
     const provider = new ethers.providers.JsonRpcProvider("https://eth.llamarpc.com");
     const poolContract = new ethers.Contract(CONFIG.DNC_USDT_PAIR, PAIR_ABI, provider);
 
@@ -165,17 +267,21 @@ async function fetchPoolOutput(inputAmountUSDT) {
     console.warn("Using baseline pool reserves calculation due to RPC connection delay.");
   }
 
-  // Constant Product Formula: Output = (AmountIn * 0.997 * ReserveOut) / (ReserveIn + (AmountIn * 0.997))
   const amountInWithFee = amountIn * 0.997; // 0.3% Uniswap Fee
-  const outputDNC = (amountInWithFee * rDNC) / (rUSDT + amountInWithFee);
+  let outputAmount = 0;
 
-  return outputDNC.toFixed(4);
+  if (isBuyingDNC) {
+    // Pay USDT, Receive DNC
+    outputAmount = (amountInWithFee * rDNC) / (rUSDT + amountInWithFee);
+  } else {
+    // Pay DNC, Receive USDT
+    outputAmount = (amountInWithFee * rUSDT) / (rDNC + amountInWithFee);
+  }
+
+  return outputAmount.toFixed(4);
 }
 
 // --- DYNAMIC SWAP EVENT LISTENERS ---
-const amountInput = document.getElementById("amount");
-const receiveElem = document.getElementById("receiveAmount");
-
 async function updateEstimate() {
   const val = amountInput.value;
   if (!val || parseFloat(val) <= 0) {
@@ -183,14 +289,11 @@ async function updateEstimate() {
     return;
   }
   const result = await fetchPoolOutput(val);
-  receiveElem.textContent = `${result} DNC`;
+  const targetTokenSymbol = isBuyingDNC ? "DNC" : "USDT";
+  receiveElem.textContent = `${result} ${targetTokenSymbol}`;
 }
 
 amountInput.addEventListener("input", updateEstimate);
 
 // Initial trigger on load
 updateEstimate();
-
-document.getElementById("switchBtn").addEventListener("click", () => {
-  receiveElem.textContent = "—";
-});
