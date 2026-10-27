@@ -19,6 +19,7 @@ let connectedAddress;
 let connected = false;
 let chainId;
 let busyAction;
+let initPromise = null;
 
 function text(key) {
   return translations[getLang()][key];
@@ -85,6 +86,8 @@ function handleReownEvent(state) {
 }
 
 async function initializeAppKit() {
+  if (!projectId) return;
+
   const [{ createAppKit }, { EthersAdapter }, networks] = await Promise.all([
     import("@reown/appkit"),
     import("@reown/appkit-adapter-ethers"),
@@ -139,6 +142,13 @@ async function initializeAppKit() {
   renderWallet();
 }
 
+// Start preloading AppKit silently on page load
+if (projectId) {
+  initPromise = initializeAppKit().catch((err) => {
+    console.warn("AppKit background preloading error:", err);
+  });
+}
+
 async function handleWalletAction() {
   if (!projectId) {
     showFeedback("projectIdMissing");
@@ -146,21 +156,19 @@ async function handleWalletAction() {
   }
 
   clearFeedback();
-  if (!appKit) {
+
+  // If AppKit is still preloading in background, wait for it
+  if (!appKit && initPromise) {
     busyAction = "connect";
     renderWallet();
     try {
-      await initializeAppKit();
+      await initPromise;
     } catch {
       showFeedback("walletSetupFailed");
       busyAction = undefined;
       renderWallet();
       return;
     }
-    busyAction = undefined;
-    renderWallet();
-    // AppKit may have restored a previous session during initialization.
-    if (connected) return;
   }
 
   if (!connected) {

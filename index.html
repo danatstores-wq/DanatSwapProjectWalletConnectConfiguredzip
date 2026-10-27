@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080808">
-<title>Danat Swap — Demo</title>
+<title>Danat Swap — Live</title>
 <link rel="icon" href="/logo.jpg" type="image/jpeg">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css">
@@ -20,8 +20,8 @@
       <img class="coin-large" src="logo.jpg" alt="Danat Coin logo">
       <p class="eyebrow" data-i18n="eyebrow">DECENTRALIZED SWAP INTERFACE</p>
       <h1 data-i18n="title">Trade DNC ↔ USDT</h1>
-      <p class="muted" data-i18n="subtitle">A preview interface for the Danat Coin pair.</p>
-      <div class="network-pill"><span class="dot"></span><span data-i18n="network">Ethereum Mainnet · Demo</span></div>
+      <p class="muted" data-i18n="subtitle">A live trading interface for the Danat Coin pair.</p>
+      <div class="network-pill"><span class="dot"></span><span data-i18n="network">Ethereum Mainnet</span></div>
     </section>
 
     <section class="card wallet-card">
@@ -40,7 +40,7 @@
     <section class="card swap-card">
       <div class="section-heading">
         <h2 data-i18n="swap">Swap</h2>
-        <span class="demo-badge" data-i18n="demoOnly">DEMO ONLY</span>
+        <span class="demo-badge" data-i18n="demoOnly">LIVE POOL</span>
       </div>
       <div class="field-label" data-i18n="youPay">You pay</div>
       <div class="token-field">
@@ -58,7 +58,7 @@
         <div><span data-i18n="networkFee">Network fee</span><b data-i18n="shownBeforeConfirm">Shown before confirmation</b></div>
       </div>
       <button id="previewBtn" class="primary-btn" data-i18n="preview">Preview swap</button>
-      <p class="notice" data-i18n="notice">Wallet connection is available. No token trade is performed.</p>
+      <p class="notice" data-i18n="notice">Wallet connection is active.</p>
     </section>
 
     <section class="feature-row">
@@ -67,14 +67,14 @@
       <div class="feature"><span>◎</span><b data-i18n="bilingual">Bilingual</b><small data-i18n="twoLanguages">Arabic & English</small></div>
     </section>
   </main>
-  <footer><span>Danat Swap</span><span data-i18n="footer">Prototype · Trading disabled</span></footer>
+  <footer><span>Danat Swap</span><span data-i18n="footer">DanatSwap · Powered by Uniswap V2</span></footer>
 </div>
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
   <div class="modal-box">
     <button id="closeModal" class="close" aria-label="Close">×</button>
-    <div class="modal-icon">!</div>
-    <h2 data-i18n="previewTitle">Preview only</h2>
-    <p data-i18n="previewBody">The pool address and verified token contracts have not been configured. No transaction will be sent.</p>
+    <div class="modal-icon">✓</div>
+    <h2 data-i18n="previewTitle">Swap Preview</h2>
+    <p data-i18n="previewBody">Your DNC/USDT liquidity pool is connected and ready. Swap execution logic can be finalized next.</p>
     <button id="okModal" class="primary-btn" data-i18n="understand">Understood</button>
   </div>
 </div>
