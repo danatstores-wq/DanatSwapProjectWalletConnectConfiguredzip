@@ -23,9 +23,8 @@ variable `VITE_REOWN_PROJECT_ID`. This identifier is used in browser code; it is
 not a wallet credential. In the Reown dashboard, allow the app's Replit preview
 origin and any published origin used for testing.
 
-The imported project did not contain a Reown Project ID. Without that setting,
-the page runs normally but the Connect Wallet button reports that setup is
-incomplete.
+If `VITE_REOWN_PROJECT_ID` is unset, the page runs normally but the Connect
+Wallet button reports that setup is incomplete.
 
 ## Mobile connection test
 

@@ -1,6 +1,3 @@
-import { createAppKit } from "@reown/appkit";
-import { EthersAdapter } from "@reown/appkit-adapter-ethers";
-import { mainnet } from "@reown/appkit/networks";
 import { getLang, translations } from "../app.js";
 import {
   getReownFeedbackKey,
@@ -17,10 +14,11 @@ const walletFeedback = document.getElementById("walletFeedback");
 const projectId = (import.meta.env.VITE_REOWN_PROJECT_ID || "").trim();
 
 let appKit;
+let mainnet;
 let connectedAddress;
 let connected = false;
 let chainId;
-let initializationFailed = false;
+let busyAction;
 
 function text(key) {
   return translations[getLang()][key];
@@ -40,13 +38,16 @@ function renderWallet() {
   const labels = translations[getLang()];
   const onMainnet = normalizeChainId(chainId) === 1;
 
+  connectButton.disabled = Boolean(busyAction);
+  networkButton.disabled = Boolean(busyAction);
+
   if (!connected || !connectedAddress) {
     walletStatus.textContent = labels.notConnected;
     walletStatus.removeAttribute("title");
     networkStatus.hidden = true;
-    connectButton.textContent = labels.connect;
-    connectButton.setAttribute("aria-label", labels.connect);
     networkButton.hidden = true;
+    connectButton.textContent = busyAction === "connect" ? labels.connecting : labels.connect;
+    connectButton.setAttribute("aria-label", connectButton.textContent);
     return;
   }
 
@@ -56,10 +57,12 @@ function renderWallet() {
   networkStatus.textContent = onMainnet ? labels.networkConnected : labels.networkUnsupported;
   networkStatus.classList.toggle("is-warning", !onMainnet);
 
-  connectButton.textContent = labels.disconnect;
-  connectButton.setAttribute("aria-label", labels.disconnect);
+  connectButton.textContent = busyAction === "disconnect" ? labels.disconnecting : labels.disconnect;
+  connectButton.setAttribute("aria-label", connectButton.textContent);
   networkButton.hidden = onMainnet;
-  networkButton.textContent = labels.switchNetwork;
+  networkButton.textContent = busyAction === "switchNetwork"
+    ? labels.switchingNetwork
+    : labels.switchNetwork;
 }
 
 function setAccountState(account) {
@@ -81,95 +84,128 @@ function handleReownEvent(state) {
   if (feedbackKey) showFeedback(feedbackKey);
 }
 
+async function initializeAppKit() {
+  const [{ createAppKit }, { EthersAdapter }, networks] = await Promise.all([
+    import("@reown/appkit"),
+    import("@reown/appkit-adapter-ethers"),
+    import("@reown/appkit/networks"),
+  ]);
+
+  mainnet = networks.mainnet;
+  appKit = createAppKit({
+    adapters: [new EthersAdapter()],
+    networks: [mainnet],
+    defaultNetwork: mainnet,
+    projectId,
+    defaultAccountTypes: { eip155: "eoa" },
+    metadata: {
+      name: "Danat Swap",
+      description: "Bilingual Danat Swap wallet connection",
+      url: window.location.origin,
+      icons: [`${window.location.origin}/logo.jpg`],
+    },
+    enableMobileFullScreen: true,
+    enableCoinbase: true,
+    themeMode: "dark",
+    themeVariables: {
+      "--w3m-accent": "#e9bd4d",
+      "--w3m-color-mix": "#070707",
+      "--w3m-color-mix-strength": 28,
+      "--w3m-border-radius-master": "12px",
+    },
+    features: {
+      analytics: false,
+      allWallets: true,
+      email: false,
+      socials: false,
+      swaps: false,
+      send: false,
+      receive: false,
+      onramp: false,
+      history: false,
+    },
+  });
+
+  appKit.subscribeAccount(setAccountState, "eip155");
+  appKit.subscribeNetwork((network) => {
+    chainId = network.chainId;
+    renderWallet();
+  });
+  appKit.subscribeEvents(handleReownEvent);
+
+  connected = appKit.getIsConnectedState();
+  connectedAddress = appKit.getAddress("eip155");
+  chainId = appKit.getChainId();
+  renderWallet();
+}
+
 async function handleWalletAction() {
-  if (!appKit) {
-    showFeedback(initializationFailed ? "walletSetupFailed" : "projectIdMissing");
+  if (!projectId) {
+    showFeedback("projectIdMissing");
     return;
   }
 
   clearFeedback();
-  const action = connected ? "disconnect" : "connect";
-  try {
-    if (action === "connect") {
-      await appKit.open({ view: "Connect", namespace: "eip155" });
-    } else {
-      await appKit.disconnect("eip155");
+  if (!appKit) {
+    busyAction = "connect";
+    renderWallet();
+    try {
+      await initializeAppKit();
+    } catch {
+      showFeedback("walletSetupFailed");
+      busyAction = undefined;
+      renderWallet();
+      return;
     }
+    busyAction = undefined;
+    renderWallet();
+    // AppKit may have restored a previous session during initialization.
+    if (connected) return;
+  }
+
+  if (!connected) {
+    busyAction = "connect";
+    renderWallet();
+    try {
+      await appKit.open({ view: "Connect", namespace: "eip155" });
+    } catch (error) {
+      showFeedback(getWalletErrorKey(error, "connect"));
+    } finally {
+      busyAction = undefined;
+      renderWallet();
+    }
+    return;
+  }
+
+  busyAction = "disconnect";
+  renderWallet();
+  try {
+    await appKit.disconnect("eip155");
+    clearFeedback();
   } catch (error) {
-    showFeedback(getWalletErrorKey(error, action));
+    showFeedback(getWalletErrorKey(error, "disconnect"));
+  } finally {
+    busyAction = undefined;
+    renderWallet();
   }
 }
 
 async function handleNetworkAction() {
-  if (!appKit) {
-    showFeedback(initializationFailed ? "walletSetupFailed" : "projectIdMissing");
-    return;
-  }
-
+  if (!appKit || !mainnet) return;
   clearFeedback();
+  busyAction = "switchNetwork";
+  renderWallet();
   try {
     await appKit.switchNetwork(mainnet, { throwOnFailure: true });
   } catch (error) {
     showFeedback(getWalletErrorKey(error, "switchNetwork"));
+  } finally {
+    busyAction = undefined;
+    renderWallet();
   }
 }
 
 connectButton.addEventListener("click", handleWalletAction);
 networkButton.addEventListener("click", handleNetworkAction);
 document.addEventListener("danat:languagechange", renderWallet);
-
-if (!projectId) {
-  renderWallet();
-} else {
-  try {
-    appKit = createAppKit({
-      adapters: [new EthersAdapter()],
-      networks: [mainnet],
-      defaultNetwork: mainnet,
-      projectId,
-      defaultAccountTypes: { eip155: "eoa" },
-      metadata: {
-        name: "Danat Swap",
-        description: "Bilingual Danat Swap wallet connection",
-        url: window.location.origin,
-        icons: [`${window.location.origin}/logo.jpg`],
-      },
-      enableMobileFullScreen: true,
-      enableCoinbase: true,
-      themeMode: "dark",
-      themeVariables: {
-        "--w3m-accent": "#e9bd4d",
-        "--w3m-color-mix": "#070707",
-        "--w3m-color-mix-strength": 28,
-        "--w3m-border-radius-master": "12px",
-      },
-      features: {
-        analytics: false,
-        allWallets: true,
-        email: false,
-        socials: false,
-        swaps: false,
-        send: false,
-        receive: false,
-        onramp: false,
-        history: false,
-      },
-    });
-
-    appKit.subscribeAccount(setAccountState, "eip155");
-    appKit.subscribeNetwork((network) => {
-      chainId = network.chainId;
-      renderWallet();
-    });
-    appKit.subscribeEvents(handleReownEvent);
-
-    connected = appKit.getIsConnectedState();
-    connectedAddress = appKit.getAddress("eip155");
-    chainId = appKit.getChainId();
-    renderWallet();
-  } catch {
-    initializationFailed = true;
-    renderWallet();
-    showFeedback("walletSetupFailed");
-  }
-}
+renderWallet();

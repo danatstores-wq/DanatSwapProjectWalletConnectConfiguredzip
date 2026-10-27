@@ -33,6 +33,7 @@ export function getWalletErrorKey(error, action) {
 
   if (code === 4001 || /user rejected|user denied|cancelled|canceled/i.test(message)) {
     if (action === "switchNetwork") return "switchNetworkError";
+    if (action === "disconnect") return "disconnectError";
     return "connectionRejected";
   }
   if (action === "switchNetwork") return "switchNetworkError";

@@ -37,5 +37,6 @@ test("maps network and disconnect failures to distinct messages", () => {
   assert.equal(getWalletErrorKey(new Error("RPC unavailable"), "switchNetwork"), "switchNetworkError");
   assert.equal(getWalletErrorKey({ code: 4001 }, "switchNetwork"), "switchNetworkError");
   assert.equal(getWalletErrorKey(new Error("RPC unavailable"), "disconnect"), "disconnectError");
+  assert.equal(getWalletErrorKey({ code: 4001 }, "disconnect"), "disconnectError");
   assert.equal(getWalletErrorKey(new Error("RPC unavailable"), "connect"), "connectionError");
 });
