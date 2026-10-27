@@ -1,19 +1,6 @@
-const CACHE = "danat-swap-demo-v3";
-const FILES = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./manifest.json",
-  "./logo.jpg",
-];
-
+// One-time cleanup for the old cache-first static demo worker.
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(FILES))
-      .then(() => self.skipWaiting()),
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
@@ -21,20 +8,10 @@ self.addEventListener("activate", (event) => {
     caches.keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => key.startsWith("danat-swap-demo-") && key !== CACHE)
+          .filter((key) => key.startsWith("danat-swap-demo-"))
           .map((key) => caches.delete(key)),
       ))
-      .then(() => self.clients.claim()),
-  );
-});
-
-self.addEventListener("fetch", (event) => {
-  const requestUrl = new URL(event.request.url);
-  if (event.request.method !== "GET" || requestUrl.origin !== self.location.origin) return;
-
-  event.respondWith(
-    caches.open(CACHE)
-      .then((cache) => cache.match(event.request))
-      .then((response) => response || fetch(event.request)),
+      .then(() => self.clients.claim())
+      .then(() => self.registration.unregister()),
   );
 });

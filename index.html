@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080808">
 <title>Danat Swap — Demo</title>
+<link rel="icon" href="/logo.jpg" type="image/jpeg">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -24,11 +25,16 @@
     </section>
 
     <section class="card wallet-card">
-      <div>
+      <div class="wallet-info">
         <div class="label" data-i18n="wallet">Wallet</div>
         <div class="wallet-status" id="walletStatus" data-i18n="notConnected">Not connected</div>
+        <div id="walletNetworkStatus" class="wallet-network-status" hidden></div>
+        <div id="walletFeedback" class="wallet-feedback" role="status" aria-live="polite" hidden></div>
       </div>
-      <button id="connectBtn" class="secondary-btn" data-i18n="connect">Connect wallet</button>
+      <div class="wallet-actions">
+        <button id="networkBtn" class="secondary-btn" data-i18n="switchNetwork" hidden>Switch to Ethereum</button>
+        <button id="connectBtn" class="secondary-btn" data-i18n="connect">Connect wallet</button>
+      </div>
     </section>
 
     <section class="card swap-card">
@@ -52,7 +58,7 @@
         <div><span data-i18n="networkFee">Network fee</span><b data-i18n="shownBeforeConfirm">Shown before confirmation</b></div>
       </div>
       <button id="previewBtn" class="primary-btn" data-i18n="preview">Preview swap</button>
-      <p class="notice" data-i18n="notice">This is a visual demo. No wallet connection or real trade is performed.</p>
+      <p class="notice" data-i18n="notice">Wallet connection is available. No token trade is performed.</p>
     </section>
 
     <section class="feature-row">
@@ -72,6 +78,6 @@
     <button id="okModal" class="primary-btn" data-i18n="understand">Understood</button>
   </div>
 </div>
-<script src="app.js"></script>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>

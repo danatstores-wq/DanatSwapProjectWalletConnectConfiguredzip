@@ -1,22 +1,44 @@
-# Danat Swap Demo
+# Danat Swap
 
 ## Run on Replit
 
-Use the **Run** button to start the `Start application` workflow.
-It serves the existing static site on `0.0.0.0:5000` using:
+Use the **Run** button to start the Vite development server on port 5000:
 
 ```sh
-python3 -m http.server 5000 --bind 0.0.0.0
+npm run dev
 ```
 
-Open the web preview to view the demo. There are no application dependencies,
-build steps, secrets, or external services required.
+Build and run the lightweight wallet-state checks with:
 
-## Project scope
+```sh
+npm run build
+npm test
+```
 
-The imported HTML, CSS, and JavaScript are preserved. This is an Arabic/English
-visual prototype only: wallet connections, price quotes, and real trades are
-not enabled. The bundled service worker caches the site for offline use; if
-changes appear stale, clear this site's browser storage and reload.
+## Wallet connection setup
 
-Python's built-in server is for development preview, not a production backend.
+The frontend uses Reown AppKit with the Ethers v6 adapter and Ethereum Mainnet
+(chain ID 1). Configure the public Reown Project ID as the shared environment
+variable `VITE_REOWN_PROJECT_ID`. This identifier is used in browser code; it is
+not a wallet credential. In the Reown dashboard, allow the app's Replit preview
+origin and any published origin used for testing.
+
+The imported project did not contain a Reown Project ID. Without that setting,
+the page runs normally but the Connect Wallet button reports that setup is
+incomplete.
+
+## Mobile connection test
+
+1. Set `VITE_REOWN_PROJECT_ID` and allow the HTTPS Replit preview origin in the
+   Reown dashboard.
+2. Open the Replit preview URL on an iOS or Android device.
+3. Tap **Connect wallet**, choose MetaMask, Trust Wallet, Coinbase Wallet, or
+   another compatible wallet through AppKit, then approve the connection in the
+   wallet app. Return to the browser and confirm the shortened address and
+   Ethereum Mainnet status.
+4. Test **Switch to Ethereum** from an unsupported network and **Disconnect**.
+   Reject a connection request once to verify the rejection message.
+
+Connecting only shares the wallet address and network. The app does not request
+private keys or recovery phrases, and no signing or token transactions are
+implemented. Wallet connections require an internet connection.
