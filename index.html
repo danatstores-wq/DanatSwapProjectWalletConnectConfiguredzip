@@ -69,6 +69,8 @@
   </main>
   <footer><span>Danat Swap</span><span data-i18n="footer">DanatSwap · Powered by Uniswap V2</span></footer>
 </div>
+
+<!-- Preview Modal -->
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
   <div class="modal-box">
     <button id="closeModal" class="close" aria-label="Close">×</button>
@@ -78,6 +80,24 @@
     <button id="okModal" class="primary-btn" data-i18n="understand">Understood</button>
   </div>
 </div>
+
+<!-- Wallet Selection Modal List -->
+<div id="walletModal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <button id="closeWalletModal" class="close" aria-label="Close">×</button>
+    <h2>Select Wallet</h2>
+    <p class="muted">Choose how you want to connect to DanatSwap.</p>
+    <div class="wallet-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+      <button id="connectMetaMask" class="primary-btn" style="background: #222; border: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        🦊 MetaMask / Browser Wallet
+      </button>
+      <button id="connectInjected" class="secondary-btn" style="width: 100%; padding: 14px;">
+        📱 Other Injected Wallet / TrustWallet
+      </button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="./app.js"></script>
 </body>
 </html>

@@ -135,13 +135,31 @@ document.getElementById("langToggle").addEventListener("click", () => {
   setLang(lang === "en" ? "ar" : "en");
 });
 
-// --- WALLET CONNECTION LOGIC ---
+// --- WALLET SELECTION LIST & CONNECTION LOGIC ---
 const connectBtn = document.getElementById("connectBtn");
+const walletModal = document.getElementById("walletModal");
+const closeWalletModal = document.getElementById("closeWalletModal");
 const walletStatus = document.getElementById("walletStatus");
 
-connectBtn.addEventListener("click", async () => {
+connectBtn.addEventListener("click", () => {
+  if (walletModal) {
+    walletModal.classList.remove("hidden");
+  }
+});
+
+if (closeWalletModal) {
+  closeWalletModal.addEventListener("click", () => {
+    walletModal.classList.add("hidden");
+  });
+}
+
+async function handleWalletConnect() {
+  if (walletModal) {
+    walletModal.classList.add("hidden");
+  }
+  
   if (!window.ethereum) {
-    alert("No Web3 wallet detected. Please open this dApp inside a Web3 browser like MetaMask.");
+    alert("No Web3 wallet provider found. Please open this app inside MetaMask browser or a Web3 wallet app.");
     return;
   }
 
@@ -163,7 +181,13 @@ connectBtn.addEventListener("click", async () => {
     connectBtn.textContent = translations[lang].connect || "Connect wallet";
     alert(`Connection failed: ${error.message || error}`);
   }
-});
+}
+
+const connectMetaMaskBtn = document.getElementById("connectMetaMask");
+const connectInjectedBtn = document.getElementById("connectInjected");
+
+if (connectMetaMaskBtn) connectMetaMaskBtn.addEventListener("click", handleWalletConnect);
+if (connectInjectedBtn) connectInjectedBtn.addEventListener("click", handleWalletConnect);
 
 // --- MODAL CONTROLS ---
 const modal = document.getElementById("modal");
