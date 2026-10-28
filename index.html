@@ -76,8 +76,8 @@
     <button id="closeModal" class="close" aria-label="Close">×</button>
     <div class="modal-icon">✓</div>
     <h2 data-i18n="previewTitle">Swap Preview</h2>
-    <p data-i18n="previewBody">Your DNC/USDT liquidity pool is connected and ready. Swap execution logic can be finalized next.</p>
-    <button id="okModal" class="primary-btn" data-i18n="understand">Understood</button>
+    <p data-i18n="previewBody">Your DNC/USDT liquidity pool is connected and ready. Click confirm below to execute your live on-chain swap.</p>
+    <button id="okModal" class="primary-btn" data-i18n="understand">Confirm & Swap</button>
   </div>
 </div>
 
@@ -87,13 +87,41 @@
     <button id="closeWalletModal" class="close" aria-label="Close">×</button>
     <h2 data-i18n="selectWalletTitle">Select Wallet</h2>
     <p class="muted" data-i18n="selectWalletSubtitle">Choose how you want to connect to DanatSwap.</p>
-    <div class="wallet-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-      <button id="connectMetaMask" class="primary-btn" style="background: #222; border: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 10px;" data-i18n="metamaskBtn">
-        🦊 MetaMask / Browser Wallet
+    
+    <div class="wallet-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+      
+      <!-- MetaMask -->
+      <button id="connectMetaMask" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; color: #fff; cursor: pointer; width: 100%;">
+        <span style="display: flex; align-items: center; gap: 12px; font-weight: 600;">
+          <span style="font-size: 20px;">🦊</span> MetaMask
+        </span>
+        <span style="font-size: 12px; color: #888;" data-i18n="browserExtension">Browser / App</span>
       </button>
-      <button id="connectInjected" class="secondary-btn" style="width: 100%; padding: 14px;" data-i18n="otherWalletBtn">
-        📱 Other Injected Wallet / TrustWallet
+
+      <!-- Trust Wallet -->
+      <button id="connectTrust" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; color: #fff; cursor: pointer; width: 100%;">
+        <span style="display: flex; align-items: center; gap: 12px; font-weight: 600;">
+          <span style="font-size: 20px;">🛡️</span> Trust Wallet
+        </span>
+        <span style="font-size: 12px; color: #888;" data-i18n="mobileWeb">Mobile / Injected</span>
       </button>
+
+      <!-- Coinbase Wallet -->
+      <button id="connectCoinbase" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; color: #fff; cursor: pointer; width: 100%;">
+        <span style="display: flex; align-items: center; gap: 12px; font-weight: 600;">
+          <span style="font-size: 20px;">🔵</span> Coinbase Wallet
+        </span>
+        <span style="font-size: 12px; color: #888;" data-i18n="secureExtension">Extension</span>
+      </button>
+
+      <!-- Other Web3 Wallet -->
+      <button id="connectInjected" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; color: #fff; cursor: pointer; width: 100%;">
+        <span style="display: flex; align-items: center; gap: 12px; font-weight: 600;">
+          <span style="font-size: 20px;">🔌</span> Other Web3 Wallet
+        </span>
+        <span style="font-size: 12px; color: #888;" data-i18n="injectedProvider">Injected Provider</span>
+      </button>
+
     </div>
   </div>
 </div>

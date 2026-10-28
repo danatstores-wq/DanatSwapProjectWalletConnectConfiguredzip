@@ -3,18 +3,12 @@ import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethe
 
 // --- DANATSWAP CONTRACT & POOL CONFIGURATION ---
 export const CONFIG = {
-  // Standard Uniswap V2 Router02 (Ethereum Mainnet)
   UNISWAP_V2_ROUTER: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-  
-  // Verified Token Contracts
   USDT_ADDRESS: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
   DNC_ADDRESS: "0x0fbe9cc858d7ad6e246fe9d01aed22abd2a66f0b",
-  
-  // Your Specific DNC-USDT Liquidity Pool Address
   DNC_USDT_PAIR: "0x51e10689e6a928fa0e02ec58589e7e293c1ab69a"
 };
 
-// --- STANDARD ABIS FOR APPROVALS AND SWAPS ---
 const ERC20_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)"
@@ -41,12 +35,6 @@ export const translations = {
     connecting: "Connecting…",
     networkConnected: "Ethereum Mainnet · Chain ID 1",
     networkUnsupported: "Wrong network. Switch to Ethereum Mainnet (Chain ID 1).",
-    projectIdMissing: "Wallet connection is not configured. Add VITE_REOWN_PROJECT_ID to the project environment variables.",
-    walletSetupFailed: "Wallet connection could not start. Check the project configuration and reload.",
-    connectionRejected: "Connection was declined. No wallet was connected.",
-    connectionError: "Could not connect. Check your wallet or network and try again.",
-    disconnectError: "Could not disconnect the wallet. Please try again.",
-    switchNetworkError: "Could not switch networks. Select Ethereum Mainnet in your wallet and try again.",
     swap: "Swap",
     demoOnly: "LIVE POOL",
     youPay: "You pay",
@@ -69,8 +57,10 @@ export const translations = {
     understand: "Confirm & Swap",
     selectWalletTitle: "Select Wallet",
     selectWalletSubtitle: "Choose how you want to connect to DanatSwap.",
-    metamaskBtn: "🦊 MetaMask / Browser Wallet",
-    otherWalletBtn: "📱 Other Injected Wallet / TrustWallet"
+    browserExtension: "Browser / App",
+    mobileWeb: "Mobile / Injected",
+    secureExtension: "Extension",
+    injectedProvider: "Injected Provider"
   },
   ar: {
     eyebrow: "واجهة مبادلة لامركزية",
@@ -86,13 +76,7 @@ export const translations = {
     switchingNetwork: "جارٍ تبديل الشبكة…",
     connecting: "جارٍ الاتصال…",
     networkConnected: "متصل بشبكة Ethereum Mainnet · المعرّف 1",
-    networkUnsupported: "الشبكة غير مدعومة. بدّل إلى Ethereum Mainnet (المعرّف 1).",
-    projectIdMissing: "إعداد الاتصال غير مكتمل. أضف VITE_REOWN_PROJECT_ID إلى متغيرات بيئة المشروع.",
-    walletSetupFailed: "تعذر بدء الاتصال بالمحفظة. تحقق من إعدادات المشروع وأعد تحميل الصفحة.",
-    connectionRejected: "تم رفض طلب الاتصال. لم يتم ربط المحفظة.",
-    connectionError: "تعذر الاتصال. تحقق من محفظتك أو شبكتك ثم أعد المحاولة.",
-    disconnectError: "تعذر قطع اتصال المحفظة. أعد المحاولة.",
-    switchNetworkError: "تعذر تبديل الشبكة. اختر Ethereum Mainnet في محفظتك ثم أعد المحاولة.",
+    networkUnsupported: "الشبكة غير مدعومة.",
     swap: "مبادلة",
     demoOnly: "مجمع نشط",
     youPay: "أنت تدفع",
@@ -114,17 +98,36 @@ export const translations = {
     previewBody: "مجمع السيولة DNC/USDT متصل وجاهز. اضغط تأكيد أدناه لتنفيذ المبادلة الحية.",
     understand: "تأكيد ومبادلة",
     selectWalletTitle: "اختر المحفظة",
-    selectWalletSubtitle: "اختر طريقة الاتصال بمنصة دانات سواب.",
-    metamaskBtn: "🦊 MetaMask / متصفح المحفظة",
-    otherWalletBtn: "📱 محفظة أخرى / TrustWallet"
+    selectWalletSubtitle: "اختر محفظتك المفضلة للاتصال بمنصة دانات سواب.",
+    browserExtension: "متصفح / تطبيق",
+    mobileWeb: "محمول",
+    secureExtension: "إضافة متصفح",
+    injectedProvider: "مزود المحفظة"
   },
 };
 
-// --- LANGUAGE STATE & TOGGLE ---
+// --- GLOBAL WALLET & LANGUAGE STATE ---
 export let lang = "en";
+let connectedAddress = null;
 
 export function getLang() {
   return lang;
+}
+
+function updateWalletUI() {
+  const walletStatus = document.getElementById("walletStatus");
+  const connectBtn = document.getElementById("connectBtn");
+
+  if (connectedAddress) {
+    const shortAddr = `${connectedAddress.substring(0, 6)}...${connectedAddress.substring(connectedAddress.length - 4)}`;
+    walletStatus.textContent = shortAddr;
+    connectBtn.textContent = translations[lang].disconnect || "Disconnect";
+    connectBtn.disabled = false;
+  } else {
+    walletStatus.textContent = translations[lang].notConnected || "Not connected";
+    connectBtn.textContent = translations[lang].connect || "Connect wallet";
+    connectBtn.disabled = false;
+  }
 }
 
 function setLang(next) {
@@ -136,6 +139,8 @@ function setLang(next) {
     if (translations[lang][key]) element.textContent = translations[lang][key];
   });
   document.getElementById("langToggle").textContent = lang === "en" ? "العربية" : "English";
+  
+  updateWalletUI();
   document.dispatchEvent(new CustomEvent("danat:languagechange", { detail: { lang } }));
 }
 
@@ -147,9 +152,14 @@ document.getElementById("langToggle").addEventListener("click", () => {
 const connectBtn = document.getElementById("connectBtn");
 const walletModal = document.getElementById("walletModal");
 const closeWalletModal = document.getElementById("closeWalletModal");
-const walletStatus = document.getElementById("walletStatus");
 
 connectBtn.addEventListener("click", () => {
+  if (connectedAddress) {
+    connectedAddress = null;
+    updateWalletUI();
+    return;
+  }
+
   if (walletModal) {
     walletModal.classList.remove("hidden");
   }
@@ -166,10 +176,8 @@ async function handleWalletConnect() {
     walletModal.classList.add("hidden");
   }
   
-  // Detect if user is on mobile
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  // If no injected provider found in regular mobile browser, redirect to MetaMask app via Deep Link
   if (!window.ethereum) {
     if (isMobile) {
       const dappUrl = window.location.href.replace(/^https?:\/\//, '');
@@ -185,26 +193,55 @@ async function handleWalletConnect() {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
-    const address = await signer.getAddress();
+    connectedAddress = await signer.getAddress();
     
-    // Shorten address for display (e.g., 0x1234...5678)
-    const shortAddr = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-    walletStatus.textContent = shortAddr;
-    connectBtn.textContent = translations[lang].disconnect || "Connected";
-    connectBtn.disabled = true;
-    console.log("Wallet connected:", address);
+    updateWalletUI();
+    console.log("Wallet connected:", connectedAddress);
   } catch (error) {
     console.error("Wallet connection failed:", error);
-    connectBtn.textContent = translations[lang].connect || "Connect wallet";
+    updateWalletUI();
     alert(`Connection failed: ${error.message || error}`);
   }
 }
 
+// Auto-connect check when opening inside MetaMask/Web3 app browser
+async function checkExistingConnection() {
+  if (window.ethereum) {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        connectedAddress = accounts[0];
+        updateWalletUI();
+      }
+    } catch (err) {
+      console.warn("Auto-connect check failed:", err);
+    }
+  }
+}
+
 const connectMetaMaskBtn = document.getElementById("connectMetaMask");
+const connectTrustBtn = document.getElementById("connectTrust");
+const connectCoinbaseBtn = document.getElementById("connectCoinbase");
 const connectInjectedBtn = document.getElementById("connectInjected");
 
 if (connectMetaMaskBtn) connectMetaMaskBtn.addEventListener("click", handleWalletConnect);
+if (connectTrustBtn) connectTrustBtn.addEventListener("click", handleWalletConnect);
+if (connectCoinbaseBtn) connectCoinbaseBtn.addEventListener("click", handleWalletConnect);
 if (connectInjectedBtn) connectInjectedBtn.addEventListener("click", handleWalletConnect);
+
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", (accounts) => {
+    if (accounts.length > 0) {
+      connectedAddress = accounts[0];
+    } else {
+      connectedAddress = null;
+    }
+    updateWalletUI();
+  });
+}
+
+checkExistingConnection();
 
 // --- MODAL CONTROLS ---
 const modal = document.getElementById("modal");
@@ -212,7 +249,7 @@ document.getElementById("previewBtn").addEventListener("click", () => modal.clas
 document.getElementById("closeModal").addEventListener("click", () => modal.classList.add("hidden"));
 
 // --- TOKEN DIRECTION STATE ---
-let isBuyingDNC = true; // Default: Pay USDT, Receive DNC
+let isBuyingDNC = true;
 
 const switchBtn = document.getElementById("switchBtn");
 const amountInput = document.getElementById("amount");
@@ -220,12 +257,9 @@ const receiveElem = document.getElementById("receiveAmount");
 
 switchBtn.addEventListener("click", async () => {
   isBuyingDNC = !isBuyingDNC;
-  
-  // Clear fields on switch
   amountInput.value = "";
   receiveElem.textContent = "—";
 
-  // Update token labels visually
   const payBadge = document.querySelector("#amount + *");
   const receiveBadge = document.querySelector("#receiveAmount + *");
   if (payBadge && receiveBadge) {
@@ -237,7 +271,7 @@ switchBtn.addEventListener("click", async () => {
 // --- LIVE ON-CHAIN SWAP EXECUTION LOGIC ---
 async function executeLiveSwap(amountInStr, amountOutMinStr) {
   if (!window.ethereum) {
-    alert("No Web3 wallet found. Please use an injected browser or wallet app.");
+    alert("No Web3 wallet found.");
     return;
   }
 
@@ -246,7 +280,6 @@ async function executeLiveSwap(amountInStr, amountOutMinStr) {
     const signer = provider.getSigner();
     const userAddress = await signer.getAddress();
 
-    // Determine token decimals and path based on direction
     const tokenInAddress = isBuyingDNC ? CONFIG.USDT_ADDRESS : CONFIG.DNC_ADDRESS;
     const tokenOutAddress = isBuyingDNC ? CONFIG.DNC_ADDRESS : CONFIG.USDT_ADDRESS;
     
@@ -254,26 +287,21 @@ async function executeLiveSwap(amountInStr, amountOutMinStr) {
     const decimalsOut = isBuyingDNC ? 18 : 6;
 
     const amountIn = ethers.utils.parseUnits(amountInStr, decimalsIn);
-    const minOutputWithSlippage = parseFloat(amountOutMinStr) * 0.995; // 0.5% slippage
+    const minOutputWithSlippage = parseFloat(amountOutMinStr) * 0.995;
     const amountOutMin = ethers.utils.parseUnits(minOutputWithSlippage.toFixed(4), decimalsOut);
 
     const tokenInContract = new ethers.Contract(tokenInAddress, ERC20_ABI, signer);
 
-    // 1. Check token allowance for the Uniswap Router
     const allowance = await tokenInContract.allowance(userAddress, CONFIG.UNISWAP_V2_ROUTER);
     if (allowance.lt(amountIn)) {
-      console.log("Approval required. Requesting token approval...");
       const approveTx = await tokenInContract.approve(CONFIG.UNISWAP_V2_ROUTER, ethers.constants.MaxUint256);
       await approveTx.wait();
-      console.log("Approval confirmed!");
     }
 
-    // 2. Prepare and execute Uniswap V2 router swap
     const routerContract = new ethers.Contract(CONFIG.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
     const path = [tokenInAddress, tokenOutAddress];
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes expiration
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
-    console.log("Executing swap transaction...");
     const swapTx = await routerContract.swapExactTokensForTokens(
       amountIn,
       amountOutMin,
@@ -284,16 +312,13 @@ async function executeLiveSwap(amountInStr, amountOutMinStr) {
 
     alert(`Swap submitted successfully! Tx: ${swapTx.hash}`);
     modal.classList.add("hidden");
-
-    const receipt = await swapTx.wait();
-    console.log("Swap confirmed in block:", receipt.blockNumber);
+    await swapTx.wait();
   } catch (error) {
     console.error("Swap execution failed:", error);
     alert(`Swap failed: ${error.message || error}`);
   }
 }
 
-// Hook up the modal confirm button to execute the live transaction
 document.getElementById("okModal").addEventListener("click", async () => {
   const amountInputVal = amountInput.value;
   const receiveAmountText = receiveElem.textContent;
@@ -306,7 +331,7 @@ document.getElementById("okModal").addEventListener("click", async () => {
   await executeLiveSwap(amountInputVal, receiveAmountText);
 });
 
-// --- DYNAMIC POOL CALCULATION WITH DIRECTION SUPPORT ---
+// --- DYNAMIC POOL CALCULATION ---
 async function fetchPoolOutput(inputAmount) {
   const amountIn = parseFloat(inputAmount);
   if (isNaN(amountIn) || amountIn <= 0) return "—";
@@ -338,21 +363,14 @@ async function fetchPoolOutput(inputAmount) {
     console.warn("Using baseline pool reserves calculation due to RPC connection delay.");
   }
 
-  const amountInWithFee = amountIn * 0.997; // 0.3% Uniswap Fee
-  let outputAmount = 0;
-
-  if (isBuyingDNC) {
-    // Pay USDT, Receive DNC
-    outputAmount = (amountInWithFee * rDNC) / (rUSDT + amountInWithFee);
-  } else {
-    // Pay DNC, Receive USDT
-    outputAmount = (amountInWithFee * rUSDT) / (rDNC + amountInWithFee);
-  }
+  const amountInWithFee = amountIn * 0.997;
+  let outputAmount = isBuyingDNC 
+    ? (amountInWithFee * rDNC) / (rUSDT + amountInWithFee)
+    : (amountInWithFee * rUSDT) / (rDNC + amountInWithFee);
 
   return outputAmount.toFixed(4);
 }
 
-// --- DYNAMIC SWAP EVENT LISTENERS ---
 async function updateEstimate() {
   const val = amountInput.value;
   if (!val || parseFloat(val) <= 0) {
@@ -365,6 +383,4 @@ async function updateEstimate() {
 }
 
 amountInput.addEventListener("input", updateEstimate);
-
-// Initial trigger on load
 updateEstimate();
