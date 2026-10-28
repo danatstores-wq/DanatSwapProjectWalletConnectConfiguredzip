@@ -67,6 +67,10 @@ export const translations = {
     previewTitle: "Swap Preview",
     previewBody: "Your DNC/USDT liquidity pool is connected and ready. Click confirm below to execute your live on-chain swap.",
     understand: "Confirm & Swap",
+    selectWalletTitle: "Select Wallet",
+    selectWalletSubtitle: "Choose how you want to connect to DanatSwap.",
+    metamaskBtn: "🦊 MetaMask / Browser Wallet",
+    otherWalletBtn: "📱 Other Injected Wallet / TrustWallet"
   },
   ar: {
     eyebrow: "واجهة مبادلة لامركزية",
@@ -109,6 +113,10 @@ export const translations = {
     previewTitle: "معاينة المبادلة",
     previewBody: "مجمع السيولة DNC/USDT متصل وجاهز. اضغط تأكيد أدناه لتنفيذ المبادلة الحية.",
     understand: "تأكيد ومبادلة",
+    selectWalletTitle: "اختر المحفظة",
+    selectWalletSubtitle: "اختر طريقة الاتصال بمنصة دانات سواب.",
+    metamaskBtn: "🦊 MetaMask / متصفح المحفظة",
+    otherWalletBtn: "📱 محفظة أخرى / TrustWallet"
   },
 };
 
