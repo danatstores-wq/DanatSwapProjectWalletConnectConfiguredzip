@@ -158,7 +158,16 @@ async function handleWalletConnect() {
     walletModal.classList.add("hidden");
   }
   
+  // Detect if user is on mobile
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // If no injected provider found in regular mobile browser, redirect to MetaMask app via Deep Link
   if (!window.ethereum) {
+    if (isMobile) {
+      const dappUrl = window.location.href.replace(/^https?:\/\//, '');
+      window.location.href = `https://metamask.app.link/dapp/${dappUrl}`;
+      return;
+    }
     alert("No Web3 wallet provider found. Please open this app inside MetaMask browser or a Web3 wallet app.");
     return;
   }
