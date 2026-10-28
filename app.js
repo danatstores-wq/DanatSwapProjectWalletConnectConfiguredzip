@@ -135,6 +135,36 @@ document.getElementById("langToggle").addEventListener("click", () => {
   setLang(lang === "en" ? "ar" : "en");
 });
 
+// --- WALLET CONNECTION LOGIC ---
+const connectBtn = document.getElementById("connectBtn");
+const walletStatus = document.getElementById("walletStatus");
+
+connectBtn.addEventListener("click", async () => {
+  if (!window.ethereum) {
+    alert("No Web3 wallet detected. Please open this dApp inside a Web3 browser like MetaMask.");
+    return;
+  }
+
+  try {
+    connectBtn.textContent = translations[lang].connecting || "Connecting…";
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    
+    // Shorten address for display (e.g., 0x1234...5678)
+    const shortAddr = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    walletStatus.textContent = shortAddr;
+    connectBtn.textContent = translations[lang].disconnect || "Connected";
+    connectBtn.disabled = true;
+    console.log("Wallet connected:", address);
+  } catch (error) {
+    console.error("Wallet connection failed:", error);
+    connectBtn.textContent = translations[lang].connect || "Connect wallet";
+    alert(`Connection failed: ${error.message || error}`);
+  }
+});
+
 // --- MODAL CONTROLS ---
 const modal = document.getElementById("modal");
 document.getElementById("previewBtn").addEventListener("click", () => modal.classList.remove("hidden"));
